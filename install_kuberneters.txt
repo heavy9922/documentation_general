@@ -1,0 +1,113 @@
+Instalación y Configuración de Kubernetes en Ubuntu
+===================================================
+
+Paso 1: Actualización del Sistema
+---------------------------------
+Actualizar la lista de paquetes y las versiones instaladas:
+sudo apt-get update
+sudo apt update && sudo apt upgrade -y
+
+Paso 2: Instalación de Herramientas Necesarias
+----------------------------------------------
+Instalar paquetes esenciales para la configuración:
+sudo apt-get install -y apt-transport-https ca-certificates curl
+
+Paso 3: Configuración del Repositorio de Kubernetes
+---------------------------------------------------
+1. Crear el directorio para almacenar claves GPG:
+   sudo mkdir -p /etc/apt/keyrings
+
+2. Descargar y configurar la clave de Kubernetes:
+   curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-archive-keyring.gpg
+
+3. Agregar el repositorio de Kubernetes a las fuentes de apt:
+   echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-archive-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+4. Actualizar nuevamente la lista de paquetes:
+   sudo apt-get update
+
+Paso 4: Instalación de Kubernetes
+---------------------------------
+Instalar kubelet, kubeadm y kubectl:
+sudo apt -y install wget kubelet kubeadm kubectl
+
+Marcar los paquetes para evitar actualizaciones automáticas:
+sudo apt-mark hold kubelet kubeadm kubectl
+
+Verificar las versiones instaladas:
+kubectl version --client && kubeadm version
+
+Paso 5: Deshabilitar Swap
+-------------------------
+1. Comentar las entradas de swap en el archivo /etc/fstab:
+   sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+2. Desactivar swap temporalmente:
+   sudo swapoff -a
+
+3. Verificar el estado de la memoria:
+   free -h
+
+Paso 6: Configuración del Sistema para Kubernetes
+-------------------------------------------------
+Habilitar los módulos del kernel necesarios:
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+Configurar parámetros de red para Kubernetes:
+sudo tee /etc/sysctl.d/kubernetes.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+
+Aplicar los cambios:
+sudo sysctl --system
+
+Cargar los módulos requeridos automáticamente al inicio:
+sudo tee /etc/modules-load.d/containerd.conf <<EOF
+overlay
+br_netfilter
+EOF
+
+Paso 7: Instalación de Containerd
+----------------------------------
+1. Instalar dependencias necesarias:
+   sudo apt install -y curl gnupg2 software-properties-common apt-transport-https ca-certificates
+
+2. Agregar la clave GPG de Docker:
+   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker-archive-keyring.gpg
+
+3. Agregar el repositorio de Docker:
+   sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+4. Actualizar la lista de paquetes:
+   sudo apt update
+
+5. Instalar containerd:
+   sudo apt install -y containerd.io
+
+6. Crear el archivo de configuración para containerd:
+   sudo mkdir -p /etc/containerd
+   sudo containerd config default | sudo tee /etc/containerd/config.toml
+
+7. Reiniciar y habilitar el servicio:
+   sudo systemctl restart containerd
+   sudo systemctl enable containerd
+
+8. Verificar el estado del servicio:
+   systemctl status containerd
+
+Paso 8: Preparar Imágenes de Kubernetes
+---------------------------------------
+Descargar las imágenes necesarias para kubeadm:
+sudo kubeadm config images pull
+
+Paso 9: Configurar el Archivo Hosts (Opcional)
+----------------------------------------------
+Editar el archivo /etc/hosts para agregar entradas personalizadas:
+sudo vim /etc/hosts
+
+Fin de la Configuración
+------------------------
+Tu sistema está listo para usar Kubernetes.

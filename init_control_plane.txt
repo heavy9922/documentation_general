@@ -1,0 +1,50 @@
+Configuración del Cluster Kubernetes con Kubeadm
+================================================
+
+Paso 1: Descargar las Imágenes Necesarias
+-----------------------------------------
+Ejecutar el siguiente comando para descargar las imágenes necesarias para `kubeadm`:
+sudo kubeadm config images pull
+
+Paso 2: Configurar el Archivo Hosts
+-----------------------------------
+Editar el archivo `/etc/hosts` para agregar una entrada que apunte al nombre del endpoint del plano de control (Control Plane):
+sudo vim /etc/hosts
+
+Agregar la siguiente línea, reemplazando `IP_OF_THE_MACHINE` con la dirección IP de la máquina:
+IP_OF_THE_MACHINE k8scp
+
+Paso 3: Inicializar el Cluster Kubernetes
+-----------------------------------------
+Inicializar el cluster Kubernetes con los siguientes parámetros:
+- `--pod-network-cidr=172.24.0.0/16`: Especifica el rango de red para los Pods.
+- `--cri-socket=unix:///run/containerd/containerd.sock`: Define el socket del runtime de contenedores (containerd).
+- `--upload-certs`: Sube certificados al cluster para su distribución.
+- `--control-plane-endpoint=k8scp`: Define el endpoint del plano de control.
+
+Comando:
+sudo kubeadm init --pod-network-cidr=172.24.0.0/16 --cri-socket=unix:///run/containerd/containerd.sock --upload-certs --control-plane-endpoint=k8scp
+
+Paso 4: Configurar Kubectl para el Usuario Actual
+-------------------------------------------------
+Configurar el acceso al cluster para el usuario actual:
+
+1. Crear el directorio de configuración de Kubernetes:
+   mkdir -p $HOME/.kube
+
+2. Copiar el archivo de configuración del administrador al directorio del usuario:
+   sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+3. Cambiar el propietario del archivo de configuración:
+   sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+4. Exportar la variable de entorno para usar `kubectl`:
+   export KUBECONFIG=$HOME/.kube/config
+
+Paso 5: Verificar la Información del Cluster
+--------------------------------------------
+Verificar el estado del cluster y confirmar que el plano de control está activo:
+kubectl cluster-info
+
+-------------------------------------------------
+¡Tu cluster Kubernetes está configurado y listo para usarse!
