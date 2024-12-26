@@ -1,0 +1,3 @@
+[submodule "monitory-docker"]
+	path = monitory-docker
+	url = https://github.com/heavy9922/monitory-docker.git
